@@ -43,11 +43,7 @@ import Observation
     }
     
     do {
-      let (data, response) = try await session.data(from: url)
-      let validData = try confirmDataAndResponse(data, response: response)
-      let portfolio = try decode(data: validData)
-      try ensurePortfolioNotEmpty(portfolio)
-      stocks = portfolio.stocks
+      stocks = try await fetchAndValidatePortfolio(from: url).stocks
     } catch let networkError as URLError {
       throw DataFetcherError.networkError(networkError)
     } catch let decodingError as DecodingError {
@@ -94,5 +90,13 @@ extension RemoteStockFetcher {
     guard !portfolio.stocks.isEmpty else {
       throw DataFetcherError.emptyJSONList
     }
+  }
+  
+  private func fetchAndValidatePortfolio(from url: URL) async throws -> Portfolio {
+    let (data, response) = try await session.data(from: url)
+    let validData = try confirmDataAndResponse(data, response: response)
+    let portfolio = try decode(data: validData)
+    try ensurePortfolioNotEmpty(portfolio)
+    return portfolio
   }
 }
