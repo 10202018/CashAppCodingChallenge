@@ -44,28 +44,55 @@ import Observation
     
     do {
       let (data, response) = try await session.data(from: url)
-      
-      guard let httpResponse = response as? HTTPURLResponse,
-          (200...299).contains(httpResponse.statusCode)
-      else {
-        throw DataFetcherError.httpError(
-          (response as? HTTPURLResponse)?.statusCode ?? 500
-        )
-      }
-      
-      let decoder = JSONDecoder()
-      let portfolio = try decoder.decode(Portfolio.self, from: data)
-      if !portfolio.stocks.isEmpty {
-        stocks = portfolio.stocks
-      } else {
-        throw DataFetcherError.emptyJSONList
-      }
+      let validData = try confirmDataAndResponse(data, response: response)
+      let portfolio = try decode(data: validData)
+      try ensurePortfolioNotEmpty(portfolio)
+      stocks = portfolio.stocks
     } catch let networkError as URLError {
       throw DataFetcherError.networkError(networkError)
     } catch let decodingError as DecodingError {
       throw DataFetcherError.decodingError(decodingError)
     } catch {
       throw error
+    }
+  }
+}
+
+extension RemoteStockFetcher {
+  private func generateValidURL() throws -> URL {
+    guard let url = URL(string: "https://storage.googleapis.com/cash-homework/cash-stocks-api/portolio.json")
+    else {
+      throw DataFetcherError.invalidURL
+    }
+    
+    return url
+  }
+  
+  private func confirmDataAndResponse(
+    _ data: Data,
+    response: URLResponse) throws -> Data {
+      
+      guard let httpResponse = response as? HTTPURLResponse,
+            (200...299).contains(httpResponse.statusCode)
+      else {
+        throw DataFetcherError.httpError(
+          (response as? HTTPURLResponse)?.statusCode ?? 500
+        )
+      }
+      
+      return (data)
+    }
+  
+  private func decode(data: Data) throws -> Portfolio {
+    do {
+      let jsonDecoder = JSONDecoder()
+      return try jsonDecoder.decode(Portfolio.self, from: data)
+    }
+  }
+  
+  private func ensurePortfolioNotEmpty(_ portfolio: Portfolio) throws {
+    guard !portfolio.stocks.isEmpty else {
+      throw DataFetcherError.emptyJSONList
     }
   }
 }
