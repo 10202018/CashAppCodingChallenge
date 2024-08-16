@@ -3,6 +3,7 @@ _The following is a High Level Overview of the implementation of the CashApp iOS
 
 ##Structure
 
+```
 CashAppCodingChallenge
     ├──Core/ (MODULE)
     ├   └── StockFetcher.swift
@@ -20,7 +21,8 @@ CashAppCodingChallenge
     ├        └── StockViewModel.swift
     ├
     ├──Stock API/ (MODULE)
-        └── RemoteStockFetcher.swift 
+        └── RemoteStockFetcher.swift
+```
 
 
 ##Necessary iOS version and Running Instructions:
